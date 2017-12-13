@@ -10,18 +10,37 @@
 
 ----------------------------------------------
 
-local ChatColors = { Color3.fromRGB(255, 119, 119), Color3.fromRGB(167, 214, 255),
-					 Color3.fromRGB(96, 255, 162),  Color3.fromRGB(233, 153, 255),
-					 Color3.fromRGB(255, 201, 156), Color3.fromRGB(255, 240, 160),
-					 Color3.fromRGB(255, 189, 230), Color3.fromRGB(227, 216, 197)
-				   }
-
+local game = game
+local script = script
+local wait = wait
+local tonumber = tonumber
+local pairs = pairs
+local Instance = Instance local instNew = Instance.new
+local UDim2 = UDim2 local ud2New = UDim2.new
+local Color3 = Color3 local RGB = Color3.fromRGB
+local Enum = Enum
+	local CoreGuiType = Enum.CoreGuiType
+	local EasingStyle, EasingDirection = Enum.EasingStyle, Enum.EasingDirection
+	local Font = Enum.Font
+	local UserInputType = Enum.UserInputType
+	local KeyCode = Enum.KeyCode
+--@services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local StarterGui = game:GetService("StarterGui")
 
-local LocalPlayer = game.Players.LocalPlayer
-local remote = game.ReplicatedStorage.remote
-local muted  = remote.muted
+
+local ChatColors = { RGB(255, 119, 119), RGB(167, 214, 255),
+					 RGB(96, 255, 162),  RGB(233, 153, 255),
+					 RGB(255, 201, 156), RGB(255, 240, 160),
+					 RGB(255, 189, 230), RGB(227, 216, 197)
+				   }
+
+
+local LocalPlayer = Players.LocalPlayer
+local remote = ReplicatedStorage.remote
+local muted = remote.muted
 
 local detect = script.Parent.chatbar.detect
 local pseudobg = script.Parent.chatbar.pseudobg
@@ -29,13 +48,14 @@ local pseudobg = script.Parent.chatbar.pseudobg
 local typing = false
 local t1, t2, t3
 
-StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, false)
+StarterGui:SetCoreGuiEnabled(CoreGuiType.Chat, false)
 
 function GetNameValue(PlayerName)
 	--snipped from github /roblox/corescripts
 	local value	= 0
 	for index = 1, #PlayerName do
-		local cValue = string.byte(string.sub(PlayerName, index, index))
+		local sbu = PlayerName:sub(index, index)
+		local cValue = sbu:byte()
 		local reverseIndex = #PlayerName - index + 1
 		if #PlayerName % 2 == 1 then
 			reverseIndex = reverseIndex - 1
@@ -56,8 +76,8 @@ end
 local function sanitize(ustring)
 	--- remove additonal spaces, tabs, et cetera
 	-- @param [ustring]: string, string to sanitize
-	local nstring = string.gsub(ustring, "%s+", " ")
-	if nstring ~= nil then
+	local nstring = ustring:gsub("%s+", " ")
+	if nstring then
 		return nstring
 	else
 		return nil
@@ -68,14 +88,14 @@ local function focus()
 	--- focuses the textbox for input
 	typing = true
 	detect.Visible = false
-	pseudobg:TweenPosition(UDim2.new(0, 0, 0, 0), "Out", "Quart", 0.25, true)
+	pseudobg:TweenPosition(ud2New(0, 0, 0, 0), EasingDirection.Out, EasingStyle.Quart, 0.25, true)
 	pseudobg.input:CaptureFocus()
 end
 
 local function clear(object)
 	--- tweens an object out of the container and then destroys it
 	-- @param [object]: TextLabel, textlabel to tween then destroy
-	object:TweenPosition(UDim2.new(0, 0, 1, -(18*10)), "Out", "Quad", 0.25, true)
+	object:TweenPosition(ud2New(0, 0, 1, -(18 * 10)), EasingDirection.Out, EasingStyle.Quad, 0.25, true)
 	object:Destroy()
 end
 
@@ -87,53 +107,53 @@ local function cmsg(plr, input, special)
 	local t = script.temp:Clone()
 	
 	if special == "mod" then
-		t.msg.TextColor3 = Color3.fromRGB(255, 223, 94)
+		t.msg.TextColor3 = RGB(255, 223, 94)
 	elseif special == "yellow" then
-		t.msg.TextColor3 = Color3.fromRGB(255, 180, 252)
+		t.msg.TextColor3 = RGB(255, 180, 252)
 	elseif special == "sys" then
-		t.plr.TextColor3 = Color3.fromRGB(0, 215, 136)
+		t.plr.TextColor3 = RGB(0, 215, 136)
 		t.plr.Text = "[SYSTEM]: "
-		t.plr.Size = UDim2.new(0, t.plr.TextBounds.X, 0, t.plr.TextBounds.Y)
-		t.msg.Position = UDim2.new(0, t.plr.TextBounds.X + 5, 0, 0)
+		t.plr.Size = ud2New(0, t.plr.TextBounds.X, 0, t.plr.TextBounds.Y)
+		t.msg.Position = ud2New(0, t.plr.TextBounds.X + 5, 0, 0)
 	elseif special == "whisper" then
-		t.plr.Font = Enum.Font.SourceSansItalic
+		t.plr.Font = Font.SourceSansItalic
 		t.plr.Text = "[whisper] " .. plr .. ": "
 	end
 	
-	if (plr == nil and special == "sys") or (plr ~= nil and special == "sys") then
+	if (plr == nil and special == "sys") or (plr and special == "sys") then
 		wait()
 		t.Parent = script.Parent.logs
-		t.Size = UDim2.new(1, 0, 0, 18)
+		t.Size = ud2New(1, 0, 0, 18)
 		t.msg.Text = input
 		repeat wait() until t.plr.TextBounds.X ~= 0
-		t.plr.Size = UDim2.new(0, t.plr.TextBounds.X, 0, t.plr.TextBounds.Y)
-		t.msg.Size = UDim2.new(5, 0, 0, t.msg.TextBounds.Y)
-		t.msg.Position = UDim2.new(0, t.plr.TextBounds.X + 5, 0, 0)
+		t.plr.Size = ud2New(0, t.plr.TextBounds.X, 0, t.plr.TextBounds.Y)
+		t.msg.Size = ud2New(5, 0, 0, t.msg.TextBounds.Y)
+		t.msg.Position = ud2New(0, t.plr.TextBounds.X + 5, 0, 0)
 	else
 		wait()
 		t.Parent = script.Parent.logs
-		t.Size = UDim2.new(1, 0, 0, 18)
+		t.Size = ud2New(1, 0, 0, 18)
 		t.plr.Text = plr .. ": "
 		t.msg.Text = input
-		t.plr.Size = UDim2.new(0, t.plr.TextBounds.X, 0, t.plr.TextBounds.Y)
-		t.msg.Size = UDim2.new(5, 0, 0, t.msg.TextBounds.Y)
-		t.msg.Position = UDim2.new(0, t.plr.TextBounds.X + 5, 0, 0)
+		t.plr.Size = ud2New(0, t.plr.TextBounds.X, 0, t.plr.TextBounds.Y)
+		t.msg.Size = ud2New(5, 0, 0, t.msg.TextBounds.Y)
+		t.msg.Position = ud2New(0, t.plr.TextBounds.X + 5, 0, 0)
 		t.plr.TextColor3 = ComputeChatColor(plr)
 	end
 	
 	if t.msg.Size.Y.Offset <= 54 then
 		if t.msg.TextBounds.X > 1050 then
-			t.msg.Size = UDim2.new(t.msg.Size.X.Scale, t.msg.Size.X.Offset, t.msg.Size.Y.Scale, 54)
-			t.Size = UDim2.new(t.Size.X.Scale, t.Size.X.Offset, t.Size.Y.Scale, t.msg.Size.Y.Offset)
+			t.msg.Size = ud2New(t.msg.Size.X.Scale, t.msg.Size.X.Offset, t.msg.Size.Y.Scale, 54)
+			t.Size = ud2New(t.Size.X.Scale, t.Size.X.Offset, t.Size.Y.Scale, t.msg.Size.Y.Offset)
 		elseif t.msg.TextBounds.X > 700 then
-			t.msg.Size = UDim2.new(t.msg.Size.X.Scale, t.msg.Size.X.Offset, t.msg.Size.Y.Scale, 36)
-			t.Size = UDim2.new(t.Size.X.Scale, t.Size.X.Offset, t.Size.Y.Scale, t.msg.Size.Y.Offset)
+			t.msg.Size = ud2New(t.msg.Size.X.Scale, t.msg.Size.X.Offset, t.msg.Size.Y.Scale, 36)
+			t.Size = ud2New(t.Size.X.Scale, t.Size.X.Offset, t.Size.Y.Scale, t.msg.Size.Y.Offset)
 		elseif t.msg.TextBounds.X > 350 then
-			t.msg.Size = UDim2.new(t.msg.Size.X.Scale, t.msg.Size.X.Offset, t.msg.Size.Y.Scale, 18)
-			t.Size = UDim2.new(t.Size.X.Scale, t.Size.X.Offset, t.Size.Y.Scale, t.msg.Size.Y.Offset)
+			t.msg.Size = ud2New(t.msg.Size.X.Scale, t.msg.Size.X.Offset, t.msg.Size.Y.Scale, 18)
+			t.Size = ud2New(t.Size.X.Scale, t.Size.X.Offset, t.Size.Y.Scale, t.msg.Size.Y.Offset)
 		end
-		--t.msg.Size = UDim2.new(0, 400 - (t.plr.Size.X.Offset + 5), 0, t.msg.TextBounds.Y)
-		t.msg.Size = UDim2.new(0, 400 - (t.plr.Size.X.Offset + 5), 1, 0)
+		--t.msg.Size = ud2New(0, 400 - (t.plr.Size.X.Offset + 5), 0, t.msg.TextBounds.Y)
+		t.msg.Size = ud2New(0, 400 - (t.plr.Size.X.Offset + 5), 1, 0)
 	end
 
 	if #c > 8 then	
@@ -149,7 +169,7 @@ local function cmsg(plr, input, special)
 		clear(script.Parent.logs["9"])
 	else
 		t.Name = "1"
-		for _,v in pairs(script.Parent.logs:GetChildren()) do
+		for _, v in pairs(script.Parent.logs:GetChildren()) do
 			if v.Name ~= "temp" then
 				v.Name = tonumber(v.Name + 1)
 			end
@@ -168,11 +188,11 @@ local function cmsg(plr, input, special)
 		sv = 0.15 * lc
 	end
 	
-	for _,v in pairs(script.Parent.logs:GetChildren()) do
+	for _, v in pairs(script.Parent.logs:GetChildren()) do
 		if v.Name ~= "temp" then
-			v:TweenPosition(UDim2.new(0, 0, v.Position.Y.Scale - sv, -v.Size.Y.Offset), "Out", "Quart", 0.25, true)
+			v:TweenPosition(ud2New(0, 0, v.Position.Y.Scale - sv, -v.Size.Y.Offset), EasingDirection.Out, EasingStyle.Quart, 0.25, true)
 		end
-		t:TweenPosition(UDim2.new(0, 0, 1, -t.Size.Y.Offset), "Out", "Quart", 0.25, true)
+		t:TweenPosition(ud2New(0, 0, 1, -t.Size.Y.Offset), EasingDirection.Out, EasingStyle.Quart, 0.25, true)
 	end
 	
 	-- POSITIONING ENDS HERE --
@@ -181,40 +201,46 @@ end
 local function release()
 	--- releases the textbox for input
 	typing = false
-	pseudobg:TweenPosition(UDim2.new(0, 0, 1, 0), "Out", "Quart", 0.25, true)
+	pseudobg:TweenPosition(ud2New(0, 0, 1, 0), EasingDirection.Out, EasingStyle.Quart, 0.25, true)
 	detect.Visible = true
 	
 	local input = pseudobg.input.Text
-	if input ~= nil then
+	if input then --if input ~= nil then
 		pseudobg.input:ReleaseFocus()
 		
 		local sinput = sanitize(input)
-		if sinput ~= "" and sinput ~= string.char(32) then
+		local space = "32"
+	--	if sinput ~= "" and sinput ~= string.char(32) then
+		if sinput ~= "" and sinput ~= space:char() then
 			if sinput == "/sc" then
 				remote.chat:FireServer("ROOT")
-			elseif string.lower(string.sub(sinput, 0, 2)) == "/w" then
-				local ps = string.sub(sinput, 4)
-				local fs = string.find(ps, string.char(32))
-				local fn = string.sub(ps, 0, fs - 1)
-				local ms = string.sub(ps, fs + 1)
+			elseif (sinput:sub(0, 2)):lower() == "/w" then --elseif string.lower(string.sub(sinput, 0, 2)) == "/w" then
+				local ps = sinput:sub(4)
+				local fs = ps:find(space:char())
+				local fn = ps:sub(0, fs -1)
+				local ms = ps:sub(fs + 1)
+			--	local ps = string.sub(sinput, 4)
+			--	local fs = string.find(ps, string.char(32))
+			--	local fn = string.sub(ps, 0, fs - 1)
+			--	local ms = string.sub(ps, fs + 1)
 				
-				if ps ~= nil and game.Players:FindFirstChild(fn) and ms ~= nil and game.Players[fn] ~= LocalPlayer then
-					remote.whisper:FireServer(game.Players[fn], ms)
+				if ps and Players:FindFirstChild(fn) and ms and Players[fn] ~= LocalPlayer then
+					remote.whisper:FireServer(Players[fn], ms)
 				end
-			elseif string.lower(string.sub(sinput, 0, 5)) == "/mute" then
-				local fn = string.sub(sinput, 7)
+			elseif (sinput:sub(0, 5)):lower() == "/mute" then --elseif string.lower(string.sub(sinput, 0, 5)) == "/mute" then
+				local fn = sinput:sub(7)
 				
-				if game.Players:FindFirstChild(fn) and game.Players[fn] ~= LocalPlayer then
-					local sv = Instance.new("StringValue", muted)
-					sv.Name  = fn
+				if Players:FindFirstChild(fn) and Players[fn] ~= LocalPlayer then
+					local sv = instNew("StringValue")
+					sv.Name = fn
 					sv.Value = fn
-					
+					sv.Parent = muted
 					cmsg("[SYSTEM]", fn .. " was successfully muted.", "sys")
 				else
 					cmsg("[SYSTEM]", "Could not find " .. fn .. ".", "sys")
 				end
-			elseif string.lower(string.sub(sinput, 0, 7)) == "/unmute" then
-				local fn = string.sub(sinput, 9)
+			elseif (sinput:sub(0, 7)):lower() == "/unmute" then --elseif string.lower(string.sub(sinput, 0, 7)) == "/unmute" then
+				local fn = sinput:sub(9)
 				
 				if muted:FindFirstChild(fn) then
 					muted[fn]:Destroy()
@@ -227,7 +253,7 @@ local function release()
 	end
 end
 
-remote.chat.OnClientEvent:connect(function(plr, input, special)	
+remote.chat.OnClientEvent:Connect(function(plr, input, special)	
 	if special == "sys" then
 		cmsg("[SYSTEM]", input, special)
 	else
@@ -237,7 +263,7 @@ remote.chat.OnClientEvent:connect(function(plr, input, special)
 	end
 end)
 
-remote.whisper.OnClientEvent:connect(function(plr, msg, sor)
+remote.whisper.OnClientEvent:Connect(function(plr, msg, sor)
 	if sor == "send" then
 		cmsg("To " .. "[" .. plr.Name .. "]", msg, "whisper")
 	elseif sor == "recieve" then
@@ -247,20 +273,20 @@ remote.whisper.OnClientEvent:connect(function(plr, msg, sor)
 	end
 end)
 
-UserInputService.InputBegan:connect(function(input, gpe)
+UserInputService.InputBegan:Connect(function(input, gpe)
 	if not gpe then
-		if input.UserInputType == Enum.UserInputType.Keyboard then
-			if input.KeyCode == Enum.KeyCode.Slash or input.KeyCode == Enum.KeyCode.Return then
+		if input.UserInputType == UserInputType.Keyboard then
+			if input.KeyCode == KeyCode.Slash or input.KeyCode == KeyCode.Return then
 				focus()
-			elseif input.KeyCode == Enum.KeyCode.Seven then
+			elseif input.KeyCode == KeyCode.Seven then
 				-- probably a really terrible solution, if anyone has anything better send a push request
 				local gkp = UserInputService:GetKeysPressed()
 				local shi, sev = false, false
 				
-				for _,v in pairs(gkp) do
-					if v.KeyCode == Enum.KeyCode.LeftShift then
+				for _, v in pairs(gkp) do
+					if v.KeyCode == KeyCode.LeftShift then
 						shi = true
-					elseif v.KeyCode == Enum.KeyCode.Seven then
+					elseif v.KeyCode == KeyCode.Seven then
 						sev = true
 					end
 				end
@@ -273,12 +299,12 @@ UserInputService.InputBegan:connect(function(input, gpe)
 	end
 end)
 
-pseudobg.input.FocusLost:connect(function(ep)
+pseudobg.input.FocusLost:Connect(function(ep)
 	if ep then
 		release()
 	end
 end)
 
-detect.MouseButton1Down:connect(function()
+detect.MouseButton1Down:Connect(function()
 	focus()
 end)
